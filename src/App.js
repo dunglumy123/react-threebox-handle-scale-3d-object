@@ -6,8 +6,24 @@ import "threebox-plugin/dist/threebox.css";
 import "./styles.css";
 
 export default function App() {
+  const key = 'get_your_own_OpIi9ZULNHzrESv6T2vL'
   const [scale, setscale] = useState(1);
   const [selectModel, setselectModel] = useState(null);
+  const baseMaps = {
+    "streets": {
+      name: "streets",
+      img: "https://cloud.maptiler.com/static/img/maps/streets.png"
+    },
+    "winter": {
+      name: "winter",
+      img: "https://cloud.maptiler.com/static/img/maps/winter.png"
+    },
+    "hybrid": {
+      name: "hybrid",
+      img: "https://cloud.maptiler.com/static/img/maps/hybrid.png"
+    }
+  }
+  const initialStyle = Object.keys(baseMaps)[0];
 
   useEffect(() => {
     let origin = [105.8551955, 21.022772155];
@@ -15,7 +31,7 @@ export default function App() {
       container: "map",
       center: origin,
       style:
-        "https://api.maptiler.com/maps/streets/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL",
+        `https://api.maptiler.com/maps/${initialStyle}/style.json?key=${key}`,
       zoom: 18,
       pitch: 60,
       antialias: true,
@@ -179,6 +195,65 @@ export default function App() {
 					}
 				)
 		}
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    class styleSwitcherControl {
+
+      constructor(options) {
+        this._options = {...options};
+        this._container = document.createElement("div");
+        this._container.classList.add("maplibregl-ctrl");
+        this._container.classList.add("maplibregl-ctrl-basemaps");
+        this._container.classList.add("closed");
+        switch (this._options.expandDirection || "right") {
+            case "top":
+                this._container.classList.add("reverse");
+            case "down":
+                this._container.classList.add("column");
+                break;
+            case "left":
+                this._container.classList.add("reverse");
+            case "right":
+                this._container.classList.add("row");
+        }
+        this._container.addEventListener("mouseenter", () => {
+            this._container.classList.remove("closed");
+        });
+        this._container.addEventListener("mouseleave", () => {
+            this._container.classList.add("closed");
+        });
+      }
+
+      onAdd(map) {
+        this._map = map;
+        const basemaps = this._options.basemaps;
+        Object.keys(basemaps).forEach((layerId) => {
+          const base = basemaps[layerId];
+          const basemapContainer = document.createElement("img");
+          basemapContainer.src = base.img;
+          basemapContainer.classList.add("basemap");
+          basemapContainer.dataset.id = layerId;
+          basemapContainer.addEventListener("click", () => {
+            const activeElement = this._container.querySelector(".active");
+            activeElement.classList.remove("active");
+            basemapContainer.classList.add("active");
+            let url_content = `https://api.maptiler.com/maps/${layerId}/style.json?key=${key}`
+            map.setStyle(url_content, {diff: false});
+          });
+          basemapContainer.classList.add("hidden");
+          this._container.appendChild(basemapContainer);
+          if (this._options.initialBasemap === layerId) {
+              basemapContainer.classList.add("active");
+          }
+        });
+        return this._container;
+      }
+
+      onRemove(){
+        this._container.parentNode?.removeChild(this._container);
+        delete this._map;
+      }
+    }
+    map.addControl(new styleSwitcherControl({basemaps: baseMaps, initialBasemap: initialStyle}), 'bottom-left');
   
     return () => {
       map.remove();
