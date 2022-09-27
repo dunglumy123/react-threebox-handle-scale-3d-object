@@ -10,7 +10,6 @@ export default function App() {
   const [selectModel, setselectModel] = useState(null);
 
   useEffect(() => {
-    //21.022772155448983, 105.85519553319996
     let origin = [105.8551955, 21.022772155];
     const map = new maplibregl.Map({
       container: "map",
@@ -22,76 +21,9 @@ export default function App() {
       antialias: true,
       bearing: 0
     });
+    let soldier;
     const easing = (t) => {
       return t * (2 - t);
-    };
-
-    let velocity = 0.0,
-      speed = 0.0,
-      ds = 0.01;
-    let keys = {a: false, d: false, s: false, w: false};
-    let soldier;
-    let api = {
-      buildings: true,
-      acceleration: 5,
-      inertia: 3
-    };
-
-    const animate = () => {
-     
-      requestAnimationFrame(animate);
-
-      speed = 0.0;
-
-      if (!(keys.w || keys.s)) {
-        if (velocity > 0) {
-          speed = -api.inertia * ds;
-        } else if (velocity < 0) {
-          speed = api.inertia * ds;
-        }
-        if (velocity > -0.0008 && velocity < 0.0008) {
-          speed = velocity = 0.0;
-          return;
-        }
-      }
-
-      if (keys.w) speed = api.acceleration * ds;
-      else if (keys.s) speed = -api.acceleration * ds;
-
-      velocity += (speed - velocity) * api.acceleration * ds;
-      if (speed === 0.0) {
-        velocity = 0;
-        return;
-      }
-
-      soldier.set({ worldTranslate: new THREE.Vector3(0, -velocity, 0) });
-      
-      let options = {
-        center: soldier.coordinates,
-        bearing: map.getBearing(),
-        easing: easing
-      };
-
-      function toDeg(rad) {
-        return (rad / Math.PI) * 180;
-      }
-
-      function toRad(deg) {
-        return (deg * Math.PI) / 180;
-      }
-
-      let deg = 1;
-      let rad = toRad(deg);
-      let zAxis = new THREE.Vector3(0, 0, 1);
-
-      if (keys.a || keys.d) {
-        rad *= keys.d ? -1 : 1;
-        soldier.set({ quaternion: [zAxis, soldier.rotation.z + rad] });
-        options.bearing = -toDeg(soldier.rotation.z);
-      }
-
-      map.jumpTo(options);
-      window.tb.map.update = true;
     };
 
     map.on("style.load", (e) => {
@@ -129,14 +61,7 @@ export default function App() {
             rotation: { x: 90, y: 180, z: 0 },
             anchor: "center" //default rotation
           };
-          // const options = {
-          //   obj: "/hatch_deadpool_dancing.glb",
-          //   type: "gltf",
-          //   scale: 0.3,
-          //   units: "meters",
-          //   rotation: { x: 90, y: 0, z: 0 },
-          //   anchor: "center" //default rotation
-          // };
+      
           window.tb.loadObj(options, (model) => {
             // animate();
            
@@ -176,52 +101,12 @@ export default function App() {
       e.target.addLayer(customLayer);
     });
     map.on("load", (e) => {
+      map.getCanvas().focus();
       // console.log(e);
-      // map.getCanvas().focus();
-      // map.getCanvas().addEventListener(
-      //   'keydown',
-      //   function (e) {
-      //   e.preventDefault();
-      //   if (e.key === 'ArrowUp') {
-      //     // up
-      //       keys.w = true
-      //     } else if (e.key === 'ArrowDown') {
-      //     // down
-      //       keys.s = true
-      //     } else if (e.key === 'ArrowLeft') {
-      //     // left
-      //       keys.a = true
-      //     } else if (e.key === 'ArrowRight') {
-      //     // right
-      //       keys.d = true
-      //     }
-      //   },
-      //   true
-      //   );
-      //   map.getCanvas().addEventListener(
-      //     'keyup',
-      //     function (e) {
-      //     e.preventDefault();
-      //     if (e.key === 'ArrowUp') {
-      //       // up
-      //         keys.w = false
-      //       } else if (e.key === 'ArrowDown') {
-      //       // down
-      //         keys.s = false
-      //       } else if (e.key === 'ArrowLeft') {
-      //       // left
-      //         keys.a = false
-      //       } else if (e.key === 'ArrowRight') {
-      //       // right
-      //         keys.d = false
-      //       }
-      //     },
-      //     true
-      //   );
-      //   map.getCanvas().addEventListener('blur', () => {
-      //     console.log('====blur')
-      //     map.getCanvas().focus();
-      //   })
+      map.getCanvas().addEventListener('blur', () => {
+        console.log('====blur')
+        map.getCanvas().focus();
+      })
     });
     map.on('click', function(e) {
       // When the map is clicked, get the geographic coordinate.
@@ -260,7 +145,6 @@ export default function App() {
 
         console.log('duration ' + duration)
         
-
 				// start the soldier animation with above options, and remove the line when animation ends
 				soldier.followPath(
 					options,
