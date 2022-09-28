@@ -24,10 +24,11 @@ export default function App() {
       img: "https://cloud.maptiler.com/static/img/maps/hybrid.png"
     }
   }
-  const initialStyle = Object.keys(baseMaps)[0];
+  const initialStyle = Object.keys(baseMaps)[1];
 
   useEffect(() => {
-    let origin = [105.8551955, 21.022772155];
+    let originHouse = [105.8578344, 21.02412502833]
+    let origin = [105.85698086932342, 21.024255509224687];
     const map = new maplibregl.Map({
       container: "map",
       center: origin,
@@ -38,11 +39,12 @@ export default function App() {
       antialias: true,
       bearing: 0
     });
+    console.log( `https://api.maptiler.com/maps/${initialStyle}/style.json?key=${key}`)
     let soldier;
     const easing = (t) => {
       return t * (2 - t);
     };
-
+    const r = 255 * 0.65;
     map.on("style.load", (e) => {
       const onObjectMouseOver = (e) => {
         // console.log("onObjectMouseOver");
@@ -70,8 +72,22 @@ export default function App() {
             enableRotatingObjects: true
             // enableTooltips: true,
           });
+
+          const optionsHouse = {
+            obj: "/opera_house.glb",
+            type: "gltf",
+            scale: 0.03,
+            units: "meters",
+            rotation: { x: 90, y: -18, z: 0 },
+            anchor: "center" //default rotation
+          };
+          window.tb.loadObj(optionsHouse, (model) => {
+            let house = model.setCoords(originHouse);
+            house.fixedZoom = scale;
+            window.tb.add(house, "house");
+          })
           const options = {
-            obj: "/hatch_deadpool_dancing.glb",
+            obj: "/girl__character_walk.glb",
             type: "gltf",
             scale: 0.2,
             units: "meters",
@@ -96,7 +112,7 @@ export default function App() {
             );
             // soldier.addEventListener('ObjectMouseOut', onObjectMouseOut, false);
             // soldier.addEventListener('ObjectChanged', onObjectChanged, false);
-            soldier.playAnimation({ animation: 1, duration: 1000000000 });
+            soldier.playAnimation({ animation: 0, duration: 1000000000 });
             // soldier.addEventListener("IsPlayingChanged", e => {
             //   console.log(e)
             //   if (!e.detail.isPlaying) {
@@ -104,11 +120,38 @@ export default function App() {
             //     soldier.playAnimation({ animation: 1, duration: 1000000000 });
             //   }
             // },false);
-            soldier.addTooltip("Deadpool", true, model.anchor, true, 1);
+            //soldier.addTooltip("Deadpool", true, model.anchor, true, 1);
             soldier.castShadow = true;
             soldier.selected = true;
 
             window.tb.add(soldier, "soldier");
+
+            // map.addSource('building', {
+            //   'type': 'geojson',
+            //   'data': './hanoi.geojson'
+            // });
+  
+            // map.addLayer({
+            //   'id': 'room-extrusion',
+            //   'type': 'fill-extrusion',
+            //   'source': 'building',
+            //   'paint': {
+            //   // See the MapLibre Style Specification for details on data expressions.
+            //   // https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/
+               
+            //   // Get the fill-extrusion-color from the source 'color' property.
+            //   'fill-extrusion-color': ['get', 'color'],
+               
+            //   // Get fill-extrusion-height from the source 'height' property.
+            //   'fill-extrusion-height': ['get', 'height'],
+               
+            //   // Get fill-extrusion-base from the source 'base_height' property.
+            //   'fill-extrusion-base': ['get', 'base_height'],
+               
+            //   // Make extrusions slightly opaque for see through indoor walls.
+            //   'fill-extrusion-opacity': 0.5
+            //   }
+            //   });
 
             d3.json('./hanoi.geojson').then(function (fc) {
               console.log(fc);
@@ -126,12 +169,20 @@ export default function App() {
     });
     map.on("load", (e) => {
       map.getCanvas().focus();
-      // console.log(e);
+      console.log(e);
       map.getCanvas().addEventListener('blur', () => {
         console.log('====blur')
         map.getCanvas().focus();
       })
     });
+
+    // map.on('tiledata', function(data){
+    //     console.log(data)
+    // });
+    // map.on('sourcedata',  function(data){
+    //   console.log(data)
+    // });
+
     map.on('click', function(e) {
       // When the map is clicked, get the geographic coordinate.
       var coordinate = map.unproject(e.point);
@@ -162,7 +213,7 @@ export default function App() {
         let duration = data.routes[0].duration * 100;
         // extract path geometry from callback geojson, and set duration of travel
         var options = {
-          animation: 3,
+          animation: 0,
           path: data.routes[0].geometry.coordinates,
           duration: duration
         }
@@ -177,13 +228,14 @@ export default function App() {
             // soldier.playAnimation({ animation: 0, duration: 1000000000 });
 					}
 				);
-        soldier.playAnimation(options);
+        // soldier.playAnimation(options);
 
-        setTimeout(() => { //Start the timer
-          console.log('setTimeout end')
-          isMoving = false
-          soldier.playAnimation({ animation: 4, duration: 1000000000 });
-        }, duration + 100)
+        // setTimeout(() => { //Start the timer
+        //   console.log('setTimeout end')
+        //   isMoving = false
+        //   console.log(soldier)
+        //   soldier.playAnimation({ name: 'TPose', duration: 1000000000 });
+        // }, duration + 100)
         
         // set destination as the new origin, for the next trip
         origin = coordinate;
