@@ -1,0 +1,21 @@
+version: '3'
+networks:
+  pretix-docker_compose_default:
+    external: true
+services:
+  vnpay_go:
+    image: nginx:1.13.1
+    restart: unless-stopped
+    container_name: vnpay_go
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./build:/usr/share/nginx/html:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    networks:
+      - pretix-docker_compose_default
+    environment:
+      - VIRTUAL_HOST=vnpay_go.rocket.nexpando.com
+      - VIRTUAL_PORT=80
+      - LETSENCRYPT_HOST=vnpay_go.rocket.nexpando.com
+      - LETSENCRYPT_EMAIL=tvtoan@gmail.com
