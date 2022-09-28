@@ -4,6 +4,7 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "threebox-plugin/dist/threebox.css";
 import "./styles.css";
+import * as d3 from "d3";
 
 export default function App() {
   const key = 'get_your_own_OpIi9ZULNHzrESv6T2vL'
@@ -108,6 +109,13 @@ export default function App() {
             soldier.selected = true;
 
             window.tb.add(soldier, "soldier");
+
+            d3.json('./hanoi.geojson').then(function (fc) {
+              console.log(fc);
+              //then we create the extrusions based on the geoJson features
+              addBuildings(fc.features);
+            })
+  
           });
         },
         render: (gl, metric) => {
@@ -182,7 +190,7 @@ export default function App() {
       })
     }
 
-    function fetchFunction(url, cb) {
+    const fetchFunction = (url, cb) => {
 			fetch(url)
 				.then(
 					function (response) {
@@ -254,6 +262,28 @@ export default function App() {
       }
     }
     map.addControl(new styleSwitcherControl({basemaps: baseMaps, initialBasemap: initialStyle}), 'bottom-left');
+    let redMaterial = new THREE.MeshPhongMaterial({
+			color: 0x660000,
+			side: THREE.DoubleSide
+		});
+
+    function addBuildings(data, info, height = 1) {
+
+			data.forEach((b) => {
+				let center = b.properties.center;
+				let s = window.tb.projectedUnitsPerMeter(center[1]);
+
+				let extrusion = window.tb.extrusion({
+					coordinates: b.geometry.coordinates,
+					geometryOptions: { curveSegments: 1, bevelEnabled: false, depth: b.layer.paint["fill-extrusion-height"] * s },
+					materials: redMaterial
+				});
+				extrusion.addTooltip(b.properties.tooltip, true);
+				extrusion.setCoords([center[0], center[1], 0]);
+				window.tb.add(extrusion);
+
+			});
+		}
   
     return () => {
       map.remove();
